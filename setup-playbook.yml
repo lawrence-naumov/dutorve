@@ -151,3 +151,11 @@
         creates: "/usr/loca/bin/terraform"
         mode: "755"
       become: yes
+
+    - name: Install Minikube
+      ansible.builtin.get_url:
+        url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+        dest: /usr/local/bin/minikube
+        mode: '0755'
+        owner: root
+        group: root
