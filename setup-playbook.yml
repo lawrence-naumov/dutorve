@@ -2,6 +2,13 @@
   hosts: localhost
   vars:
     setup_username: lawrence
+    arduino_ide_version: "2.3.2"
+    terraform_version: "1.9.8"
+    minikube_version: "1.38.1"
+
+    terraform_download_url: "https://mirror.yandex.ru/mirrors/releases.hashicorp.com/terraform/{{ terraform_version }}/terraform_{{ terraform_version }}_linux_amd64.zip"
+    minikube_download_url: "https://storage.googleapis.com/minikube/releases/v{{ minikube_version }}/minikube-linux-amd64"
+    arduino_download_url: "https://downloads.arduino.cc/arduino-ide/arduino-ide_{{ arduino_ide_version }}_Linux_64bit.zip"
 
     dnf_cli_packages:
       - neovim
@@ -69,10 +76,10 @@
         state: present
       become: true
 
-    - name: Generate CDI Configuration
-      ansible.builtin.shell: "nvidia-ctk cdi generate -output /etc/cdi/nvidia.yaml"
-      args:
-        creates: "/etc/cdi/nvidia.yaml"
+    - name: Generate Nvidia CDI configuration
+      ansible.builtin.command:
+        cmd: "nvidia-ctk cdi generate -output /etc/cdi/nvidia.yaml"
+      creates: "/etc/cdi/nvidia.yaml"
       become: yes
 
     - name: Add Flathub remote repository
@@ -81,6 +88,7 @@
         state: present
         flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
         method: system
+      become: yes
 
     - name: Flatpak GUI Software
       community.general.flatpak:
@@ -90,7 +98,7 @@
         method: system
       become: yes
 
-    - name: Enable and start Docker service
+    - name: Enable and started Docker service (no restart)
       ansible.builtin.service:
         name: docker
         enabled: true
@@ -100,7 +108,7 @@
     - name: Setup fish for user
       block:
         - name: Find the absolute path of fish
-          ansible.builtin.command: which fish
+          ansible.builtin.command: command -v fish
           register: fish_path
           changed_when: false
           failed_when: fish_path.rc != 0
@@ -134,21 +142,92 @@
         clone: yes
         update: no
 
-    - name: Inttall Terraform
+    - name: Install Terraform
       ansible.builtin.unarchive:
-        src: "https://mirror.yandex.ru/mirrors/releases.hashicorp.com/terraform/1.9.8/terraform_1.9.8_linux_amd64.zip"
+        src: "{{ terraform_download_url }}"
         dest: "/usr/local/bin/"
         remote_src: yes
         include:
           - "terraform"
-        creates: "/usr/loca/bin/terraform"
+        creates: "/usr/local/bin/terraform"
         mode: "755"
       become: yes
 
     - name: Install Minikube
       ansible.builtin.get_url:
-        url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+        url: "{{ minikube_download_url }}"
         dest: /usr/local/bin/minikube
         mode: '0755'
         owner: root
         group: root
+    - name: Configure Arduino IDE and ESP32 Dev Environment on Fedora
+      become: yes
+      block: 
+        - name: Install system dependencies 
+          dnf: 
+            name: 
+              - python3-pip
+              - python3-pyserial
+              - libnsl
+              - unzip
+            state: present
+        - name: Create Arduino IDE installation directory
+          file:
+            path: "{{ install_dir }}"
+            state: directory
+            mode: '0755'
+        - name: Download and extract Arduino IDE
+          unarchive:
+            src: "{{ arduino_download_url }}"
+            dest: "{{ install_dir }}"
+            remote_src: yes
+            extra_opts: [--strip-components=1]
+          creates: "{{ install_dir }}/arduino-ide"
+        - name: Ensure correct ownership of installation directory
+          file:
+          path: "{{ install_dir }}"
+          recurse: yes
+          owner: root
+          group: root
+        - name: Create symlink in system PATH
+          file:
+            src: "{{ install_dir }}/arduino-ide"
+            dest: "/usr/local/bin/arduino-ide"
+            state: link
+        - name: Add user to dialout group for CH340 serial access
+          user:
+            name: "{{ setup_username }}"
+            groups: 
+              - uucp
+              - lock
+            append: yes
+        - name: Configure ESP32 Board Manager URL for Arduino IDE
+          become: false
+          block:
+            - name: Ensure Arduino configuration directory exists
+              file:
+                path: "{{ ansible_env.HOME }}/.arduinoIDE"
+                state: directory
+                mode: '0755'
+        - name: Add ESP32 URL to arduino-cli.yaml
+          copy:
+            dest: "{{ ansible_env.HOME }}/.arduinoIDE/arduino-cli.yaml"
+            content: |
+              board_manager:
+                additional_urls:
+                - https://github.io
+            mode: '0644'
+        - name: Create Desktop Entry for easy launching
+          copy:
+            dest: "/usr/share/applications/arduino-ide.desktop"
+            content: |
+              [Desktop Entry]
+              Type=Application
+              Name=Arduino IDE
+              GenericName=Arduino IDE Comment=Open-source electronics prototyping platform
+              Exec=/usr/local/bin/arduino-ide %F
+              Icon={{ install_dir }}/resources/app/lib/backend/resources/arduino.png
+              Terminal=false
+              Categories=Development;Engineering;
+              MimeType=text/x-arduino;
+            mode: '0644'
