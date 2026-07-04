@@ -4,6 +4,7 @@
     setup_username: lawrence
     arduino_ide_version: "2.3.2"
     terraform_version: "1.9.8"
+    install_dir: /opt/arduino-ide
     minikube_version: "1.38.1"
 
     terraform_download_url: "https://mirror.yandex.ru/mirrors/releases.hashicorp.com/terraform/{{ terraform_version }}/terraform_{{ terraform_version }}_linux_amd64.zip"
@@ -17,6 +18,22 @@
       - uv
       - htop
       - fd-find
+      - git
+      - curl
+      - wget
+      - gcc
+      - gcc-c++
+      - make
+      - cmake
+      - pkg-config
+      - python3-devel
+      - kernel-devel
+      - kernel-headers
+      - openssl-devel
+      - ripgrep
+      - fzf
+      - btop
+      - zoxide
 
     dnf_virtualization_packages:
       - docker-ce
@@ -29,6 +46,10 @@
       - libvirt
       - nvidia-container-toolkit
       - nvidia-container-toolkit-selinux
+      - conntrack
+      - crictl
+      - cri-tools
+      - kubectl
 
     dnf_gui_packages:
       - alacritty
@@ -47,6 +68,12 @@
       - com.usebottles.bottles
       - com.belmoussaoui.Authenticator
       - com.discordapp.Discord
+
+    dnf_asus_packages:
+      - fwupd
+      - asusctl
+      - supergfxctl
+      - power-profiles-daemon
 
   tasks:
     - name: Add DNF repos
@@ -143,7 +170,7 @@
         update: no
 
     - name: Install Terraform
-      ansible.builtin.unarchive:
+      community.general.unarchive:
         src: "{{ terraform_download_url }}"
         dest: "/usr/local/bin/"
         remote_src: yes
@@ -164,67 +191,79 @@
       become: yes
       block: 
         - name: Install system dependencies 
-          dnf: 
+          ansible.builtin.dnf5: 
             name: 
               - python3-pip
               - python3-pyserial
               - libnsl
               - unzip
             state: present
+
         - name: Create Arduino IDE installation directory
-          file:
+          ansible.builtin.file:
             path: "{{ install_dir }}"
             state: directory
             mode: '0755'
+
         - name: Download and extract Arduino IDE
-          unarchive:
+          ansible.builtin.unarchive:
             src: "{{ arduino_download_url }}"
             dest: "{{ install_dir }}"
             remote_src: yes
             extra_opts: [--strip-components=1]
           creates: "{{ install_dir }}/arduino-ide"
+
         - name: Ensure correct ownership of installation directory
-          file:
-          path: "{{ install_dir }}"
-          recurse: yes
-          owner: root
-          group: root
+          ansible.builtin.file:
+            path: "{{ install_dir }}"
+            recurse: yes
+            owner: root
+            group: root
+
         - name: Create symlink in system PATH
-          file:
+          ansible.builtin.file:
             src: "{{ install_dir }}/arduino-ide"
             dest: "/usr/local/bin/arduino-ide"
             state: link
+
         - name: Add user to dialout group for CH340 serial access
-          user:
+          ansible.builtin.user:
             name: "{{ setup_username }}"
             groups: 
               - uucp
               - lock
             append: yes
+
         - name: Configure ESP32 Board Manager URL for Arduino IDE
-          become: false
           block:
             - name: Ensure Arduino configuration directory exists
-              file:
-                path: "{{ ansible_env.HOME }}/.arduinoIDE"
+              ansible.builtin.file:
+                path: "{{ setup_username }}/.arduinoIDE"
                 state: directory
                 mode: '0755'
+              become: yes
+              become_user: "{{ setup_username }}"
+
         - name: Add ESP32 URL to arduino-cli.yaml
-          copy:
+          ansible.builtin.copy:
             dest: "{{ ansible_env.HOME }}/.arduinoIDE/arduino-cli.yaml"
             content: |
               board_manager:
                 additional_urls:
-                - https://github.io
+                - https://espressif.github.io/arduino-esp32/package_esp32_index.json
             mode: '0644'
+          become: yes
+          become_user: "{{ setup_username }}"
+
         - name: Create Desktop Entry for easy launching
-          copy:
+          ansible.builtin.copy:
             dest: "/usr/share/applications/arduino-ide.desktop"
             content: |
               [Desktop Entry]
               Type=Application
               Name=Arduino IDE
-              GenericName=Arduino IDE Comment=Open-source electronics prototyping platform
+              GenericName=Arduino IDE
+              Comment=Open-source electronics prototyping platform
               Exec=/usr/local/bin/arduino-ide %F
               Icon={{ install_dir }}/resources/app/lib/backend/resources/arduino.png
               Terminal=false
