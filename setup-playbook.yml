@@ -2,6 +2,45 @@
   hosts: localhost
   vars:
     setup_username: lawrence
+
+    dnf_cli_packages:
+      - neovim
+      - fish
+      - tmux
+      - uv
+      - htop
+      - fd-find
+
+    dnf_virtualization_packages:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+      - qemu
+      - "@virtualization"
+      - libvirt
+      - nvidia-container-toolkit
+      - nvidia-container-toolkit-selinux
+
+    dnf_gui_packages:
+      - alacritty
+      - fedora-workstation-repositories
+      - google-chrome-stable
+      - steam
+
+    dnf_nvidia_driver_packages:
+      - akmod-nvidia
+      - xorg-x11-drv-nvidia-cuda
+
+    flatpak_gui_packages:
+      - org.telegram.desktop
+      - md.obsidian.Obsidian
+      - com.mikrotik.WinBox
+      - com.usebottles.bottles
+      - com.belmoussaoui.Authenticator
+      - com.discordapp.Discord
+
   tasks:
     - name: Add DNF repos
       ansible.builtin.yum_repository:
@@ -12,39 +51,23 @@
         enabled: true
       become: true
 
-    - name: Terminal DNF software
-      ansible.builtin.dnf5:
-        name:
-          - neovim
-          - fish
-          - tmux
-          - uv
-          - htop
-          - fd-find
-        state: present
-      become: yes
-
     - name: Enable Fedora COPR repository
       community.general.copr:
         state: enabled
         name: "@ai-ml/nvidia-container-toolkit"
       become: yes
 
-    - name: Virtualization DNF software
+    - name: Install DNF packages
       ansible.builtin.dnf5:
-        name:
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-          - docker-buildx-plugin
-          - docker-compose-plugin
-          - qemu
-          - "@virtualization"
-          - "libvirt"
-          - nvidia-container-toolkit
-          - nvidia-container-toolkit-selinux
+        name: >-
+          {{
+            dnf_cli_packages
+            + dnf_virtualization_packages
+            + dnf_gui_packages
+            + dnf_nvidia_driver_packages
+          }}
         state: present
-      become: yes
+      become: true
 
     - name: Generate CDI Configuration
       ansible.builtin.shell: "nvidia-ctk cdi generate -output /etc/cdi/nvidia.yaml"
@@ -52,47 +75,23 @@
         creates: "/etc/cdi/nvidia.yaml"
       become: yes
 
-    - name: GUI DNF Software
-      ansible.builtin.dnf5:
-        name:
-          - alacritty
-          - fedora-workstation-repositories
-          - google-chrome-stable
-          - steam
-        state: present
-      become: yes
-
-    - name: Nvidia DNF Software
-      ansible.builtin.dnf5:
-        name:
-          - akmod-nvidia
-          - xorg-x11-drv-nvidia-cuda
-        state: present
-      become: yes
-
     - name: Add Flathub remote repository
       community.general.flatpak_remote:
         name: flathub
         state: present
         flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
-        method: user
+        method: system
 
     - name: Flatpak GUI Software
-      become: no
       community.general.flatpak:
-        name:
-          - org.telegram.desktop
-          - md.obsidian.Obsidian
-          - com.mikrotik.WinBox
-          - com.usebottles.bottles
-          - com.belmoussaoui.Authenticator
-          - com.discordapp.Discord
+        name: "{{ flatpak_gui_packages }}"          
         state: present
         remote: flathub
-        method: user
+        method: system
+      become: yes
 
     - name: Enable and start Docker service
-      ansible.builtin.systemd_service:
+      ansible.builtin.service:
         name: docker
         enabled: true
         state: started
@@ -127,12 +126,6 @@
           - docker
         append: true
       become: true
-
-    - name: Start and enable Docker service
-      ansible.builtin.systemd:
-        name: docker
-        state: started
-        enabled: yes
 
     - name: Install Lazyvim
       ansible.builtin.git:
