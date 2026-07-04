@@ -15,41 +15,63 @@
       - neovim
       - fish
       - tmux
-      - uv
-      - htop
-      - fd-find
       - git
       - curl
       - wget
-      - gcc
-      - gcc-c++
-      - make
-      - cmake
-      - pkg-config
-      - python3-devel
-      - kernel-devel
-      - kernel-headers
-      - openssl-devel
+      - htop
+      - btop
+      - tree
+      - jq
+      - fd
       - ripgrep
       - fzf
-      - btop
       - zoxide
+      - lsof
+      - strace
+      - tcpdump
+      - nmap
+      - bind-utils
+      - rsync
+      - unzip
+      - zip
 
-    dnf_virtualization_packages:
+    dnf_dev_packages:
+      - gcc
+      - gcc-c++
+      - clang
+      - llvm
+      - lld
+      - make
+      - cmake
+      - ninja-build
+      - just
+      - pkg-config
+      - python3-devel
+      - python3-pip
+      - openssl-devel
+      - uv
+
+    dnf_container_packages:
       - docker-ce
       - docker-ce-cli
       - containerd.io
       - docker-buildx-plugin
       - docker-compose-plugin
+      - podman
+      - podman-compose
       - qemu
-      - "@virtualization"
       - libvirt
-      - nvidia-container-toolkit
-      - nvidia-container-toolkit-selinux
-      - conntrack
-      - crictl
-      - cri-tools
+      - virt-manager
+      - virt-install
+      - bridge-utils
+      - "@virtualization"
       - kubectl
+      - conntrack
+      - cri-tools
+      - crictl
+      - socat
+      - ebtables
+      - iptables
 
     dnf_gui_packages:
       - alacritty
@@ -57,9 +79,14 @@
       - google-chrome-stable
       - steam
 
-    dnf_nvidia_driver_packages:
+    dnf_nvidia_packages:
       - akmod-nvidia
       - xorg-x11-drv-nvidia-cuda
+      - nvidia-modprobe
+      - nvidia-container-toolkit
+      - nvidia-container-toolkit-selinux
+      - kernel-devel
+      - kernel-headers
 
     flatpak_gui_packages:
       - org.telegram.desktop
@@ -70,19 +97,63 @@
       - com.discordapp.Discord
 
     dnf_asus_packages:
-      - fwupd
       - asusctl
       - supergfxctl
+      - switcheroo-control
       - power-profiles-daemon
+      - fwupd
+      - lm_sensors
+      - powertop
+      - nvtop
+      - stress-ng
+      - usbutils
+      - pciutils
+      - vulkan-tools
+      - mesa-demos
+
+    dnf_arduino_packages:
+      - arduino-cli
+      - python3-pyserial
+      - libnsl
+
+    dnf_network_packages:
+      - wireguard-tools
+      - openvpn
+
+    dnf_shell_packages:
+      - bash-completion
+      - fish
+
+    dnf_rpm_fusion_repos:
+      - "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_distribution_major_version }}.noarch.rpm"
+      - "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_distribution_major_version }}.noarch.rpm"
+
+    dnf_docker_repos:
+      - "https://download.docker.com/linux/fedora/docker-ce.repo"
 
   tasks:
-    - name: Add DNF repos
-      ansible.builtin.yum_repository:
-        name: Docker
-        description: Docker Repository
-        baseurl: https://download.docker.com/linux/fedora/docker-ce.repo
-        gpgcheck: false
-        enabled: true
+
+    - name: Enable DNF repositories
+      ansible.builtin.dnf5:
+        name: "{{ dnf_rpm_fusion_repos + dnf_docker_repos }}"
+        state: present
+        disable_gpg_check: false
+      become: true
+
+    - name: Install Fedora Workstation repositories
+      ansible.builtin.dnf5:
+        name: fedora-workstation-repositories
+        state: present
+      become: true
+
+    - name: Enable Google Chrome repository
+      ansible.builtin.command:
+        argv:
+          - dnf
+          - config-manager
+          - setopt
+          - google-chrome.enabled=1
+      changed_when: false
       become: true
 
     - name: Enable Fedora COPR repository
@@ -93,19 +164,30 @@
 
     - name: Install DNF packages
       ansible.builtin.dnf5:
+        update_cache: true
         name: >-
           {{
             dnf_cli_packages
-            + dnf_virtualization_packages
+            + dnf_dev_packages
+            + dnf_container_packages
+            + dnf_nvidia_packages
+            + dnf_asus_packages
             + dnf_gui_packages
-            + dnf_nvidia_driver_packages
+            + dnf_arduino_packages
+            + dnf_network_packages
+            + dnf_shell_packages
           }}
         state: present
       become: true
 
     - name: Generate Nvidia CDI configuration
       ansible.builtin.command:
-        cmd: "nvidia-ctk cdi generate -output /etc/cdi/nvidia.yaml"
+        argv:
+          - nvidia-ctk
+          - cdi
+          - generate
+          - -output
+          - /etc/cdi/nvidia.yaml
       creates: "/etc/cdi/nvidia.yaml"
       become: yes
 
@@ -132,33 +214,31 @@
         state: started
       become: true
 
-    - name: Setup fish for user
-      block:
-        - name: Find the absolute path of fish
-          ansible.builtin.command: command -v fish
-          register: fish_path
-          changed_when: false
-          failed_when: fish_path.rc != 0
+    - name: Find the absolute path of fish
+      ansible.builtin.command:
+        cmd: "command -v fish"
+      register: fish_path
+      changed_when: false
+      failed_when: fish_path.rc != 0
 
-        - name: Ensure fish is registered in /etc/shells
-          ansible.builtin.lineinfile:
-            path: /etc/shells
-            line: "{{ fish_path.stdout.strip() }}"
-            create: true
-            mode: "0644"
-          become: yes
+    - name: Ensure fish is registered in /etc/shells
+      ansible.builtin.lineinfile:
+        path: /etc/shells
+        line: "{{ fish_path.stdout.strip() }}"
+        create: true
+        mode: "0644"
+      become: yes
 
-        - name: Set fish as the default login shell for the user
-          ansible.builtin.user:
-            name: "{{ setup_username }}"
-            shell: "{{ fish_path.stdout.strip() }}"
-          become: yes
-
-    - name: Add user to the docker group
+    - name: Setup user default shell and groups
       ansible.builtin.user:
         name: "{{ setup_username }}"
+        shell: "{{ fish_path.stdout.strip() }}"
         groups:
           - docker
+          - libvirt
+          - uucp
+          - lock
+          - dialout
         append: true
       become: true
 
@@ -168,6 +248,8 @@
         dest: "/home/{{ setup_username }}/.config/nvim"
         clone: yes
         update: no
+      become: true
+      become_user: "{{ setup_username }}"
 
     - name: Install Terraform
       community.general.unarchive:
@@ -187,18 +269,11 @@
         mode: '0755'
         owner: root
         group: root
+      become: true
+
     - name: Configure Arduino IDE and ESP32 Dev Environment on Fedora
       become: yes
       block: 
-        - name: Install system dependencies 
-          ansible.builtin.dnf5: 
-            name: 
-              - python3-pip
-              - python3-pyserial
-              - libnsl
-              - unzip
-            state: present
-
         - name: Create Arduino IDE installation directory
           ansible.builtin.file:
             path: "{{ install_dir }}"
@@ -226,19 +301,11 @@
             dest: "/usr/local/bin/arduino-ide"
             state: link
 
-        - name: Add user to dialout group for CH340 serial access
-          ansible.builtin.user:
-            name: "{{ setup_username }}"
-            groups: 
-              - uucp
-              - lock
-            append: yes
-
         - name: Configure ESP32 Board Manager URL for Arduino IDE
           block:
             - name: Ensure Arduino configuration directory exists
               ansible.builtin.file:
-                path: "{{ setup_username }}/.arduinoIDE"
+                path: "/home/{{ setup_username }}/.arduinoIDE"
                 state: directory
                 mode: '0755'
               become: yes
@@ -246,7 +313,7 @@
 
         - name: Add ESP32 URL to arduino-cli.yaml
           ansible.builtin.copy:
-            dest: "{{ ansible_env.HOME }}/.arduinoIDE/arduino-cli.yaml"
+            dest: "/home/{{ setup_username }}/.arduinoIDE/arduino-cli.yaml"
             content: |
               board_manager:
                 additional_urls:
@@ -270,3 +337,17 @@
               Categories=Development;Engineering;
               MimeType=text/x-arduino;
             mode: '0644'
+
+    - name: Asus fwupdmgr (Step 1)
+      ansible.builtin.command: 
+        argv:
+          - fwupdmgr
+          - refresh
+      become: yes
+
+    - name: Asus fwupdmgr (Step 2)
+      ansible.builtin.command:
+        argv:
+          - fwupdmgr
+          - get-updates
+      become: yes
