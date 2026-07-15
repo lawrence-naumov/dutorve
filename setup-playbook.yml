@@ -7,6 +7,8 @@
     terragrunt_version: "1.1.1"
     install_dir: /opt/arduino-ide
     minikube_version: "1.38.1"
+    # TODO: Calculate fedora version
+    remi_repo_url: "https://rpms.remirepo.net/fedora/remi-release-44.rpm"
 
     terraform_download_url: "https://mirror.yandex.ru/mirrors/releases.hashicorp.com/terraform/{{ terraform_version }}/terraform_{{ terraform_version }}_linux_amd64.zip"
     arduino_download_url: "https://downloads.arduino.cc/arduino-ide/arduino-ide_{{ arduino_ide_version }}_Linux_64bit.zip"
@@ -140,7 +142,7 @@
       - "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
 
   tasks:
-
+    
     - name: Enable DNF repositories
       ansible.builtin.dnf5:
         name: "{{ dnf_rpm_fusion_repos }}"
@@ -176,6 +178,13 @@
         state: enabled
         name: "@ai-ml/nvidia-container-toolkit"
       become: yes
+
+    - name: Add Remi repo
+      ansible.builtin.dnf5:
+        name: "{{ remi_repo_url }}"
+        state: present
+        disable_gpg_check: true
+      become: true
 
     - name: Install DNF packages
       ansible.builtin.dnf5:
