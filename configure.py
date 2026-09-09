@@ -5,6 +5,7 @@ import sys
 import os
 import traceback
 import pathlib
+import webbrowser
 
 
 BIN_DIRECTORY = pathlib.Path("/usr/local/bin")
@@ -121,7 +122,16 @@ def main():
         formatter_class=argparse.RawTextHelpFormatter,
     )
 
-    subparsers = parser.add_subparsers(dest="command", required=True, help="command")
+    subparsers = parser.add_subparsers(dest="command", required=False, help="command")
+    help_parser = subparsers.add_parser(
+        "help", help="Show help message for any command"
+    )
+    help_parser.add_argument(
+        "help_command",
+        help="Show help for specific command",
+        metavar="command",
+        nargs="?",
+    )
 
     run_parser = subparsers.add_parser(
         "run", help="Run installation and software configuration"
@@ -134,6 +144,8 @@ def main():
     )
 
     subparsers.add_parser("update", help="Update system-setup from github")
+    subparsers.add_parser("open-repo", help="Open repo page")
+    subparsers.add_parser("workdir", help="Show project working directory")
     subparsers.add_parser(
         "recreate-inventory",
         help="Recreate ansible inventory file",
@@ -142,6 +154,28 @@ def main():
 
     args = parser.parse_args()
 
+    if args.command == "help" or not args.command:
+        if args.help_command:
+            try:
+                subparsers.choices[args.help_command].print_help()
+            except KeyError:
+                print(
+                    f"Invalid command '{args.help_command}'"
+                    f"use one of {
+                        ', '.join(
+                            "'" + command + "'" for command in subparsers.choices.keys()
+                        )
+                    }\n\n",
+                    file=sys.stderr,
+                )
+            else:
+                exit(0)
+        parser.print_help()
+        exit(0)
+    if args.command == "open-repo":
+        webbrowser.open(PROJECT_URL)
+    if args.command == "workdir":
+        print(PROJECT_DIRECTORY)
     if args.command == "install":
         run_ansible(game_mode=args.game)
 
