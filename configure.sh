@@ -4,9 +4,10 @@ set -e
 PROJECT_PATH="$HOME/.system-setup/"
 INVENTORY_FILE="inventory.yml"
 VAULT_PASS_FILE=".vault_pass"
+GAME_MODE="false"
 
 cd "$PROJECT_PATH"
-command_list=("update" "install" "recreate-inventory")
+command_list=("update" "install" "recreate-inventory", "help")
 command_found=0
 for item in "${command_list[@]}"; do
   if [[ "$item" == "$1" ]]; then
@@ -14,12 +15,41 @@ for item in "${command_list[@]}"; do
     break
   fi
 done
-if ((!command_found)); then
+
+print_default_help() {
   echo "Usage: system-setup COMMAND"
   echo "Commands:"
   echo "  update                update installation"
   echo "  install               run configuring system"
   echo "  recreate-inventory    recreate inventory file"
+}
+
+print_help_for_command() {
+  command = $1
+  case "$command" in
+  "update")
+    echo "Pull new version from github and hard reset to it."
+    echo "Usage: system-setup update"
+    ;;
+  "install")
+    echo "Run installation and software configuration"
+    echo "Usage: system-setup install [--game-mode]"
+    echo -e "\nParams:"
+    echo "  --game-mode: Configure network drivers for less ping value"
+    ;;
+  "recreate-inventory")
+    echo "Recreate ansible inventory file"
+    echo "Use when you chanched password or forgot the inventory file password"
+    echo "Usage: recreate-inventory"
+    ;;
+  *)
+    echo "Unknown command. Use 'system-setup help' for command list"
+    ;;
+  esac
+}
+
+if ((!command_found)) || [[ "$1" == "help" ]] || [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
+  print_default_help
   exit 0
 fi
 
@@ -33,7 +63,7 @@ if [[ "$1" == "install" ]] && [ ! -f "$INVENTORY_FILE" ] || [[ "$1" == "recreate
 
   read -sp "Enter the password for your local machine: " SERVER_PASS
   echo ""
-
+  GAME_MODE="false"
   read -sp "Enter a NEW password to secure your Ansible Vault: " VAULT_PASS
   echo ""
 

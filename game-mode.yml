@@ -1,0 +1,86 @@
+---
+- name: Управление сетевыми настройками Fedora для игр
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  vars:
+    mode: "gaming"
+
+  tasks:
+    - name: Конфигурация энергосбережения Wi-Fi (gaming=выкл, normal=вкл)
+      community.general.ini_file:
+        path: /etc/NetworkManager/conf.d/default-wifi-powersave-on.conf
+        section: connection
+        option: wifi.powersave
+        value: "{{ '2' if mode == 'gaming' else '3' }}"
+        mode: '0644'
+      become: true
+      register: nm_config_1
+
+    - name: Конфигурация подавления фонового сканирования Wi-Fi
+      community.general.ini_file:
+        path: /etc/NetworkManager/conf.d/99-disable-scan.conf
+        section: device
+        option: wifi.scan-rand-mac-address
+        value: "no"
+        state: "{{ 'present' if mode == 'gaming' else 'absent' }}"
+        mode: '0644'
+      become: true
+      register: nm_config_2
+
+    - name: Перезапуск NetworkManager при изменении настроек
+      ansible.builtin.systemd:
+        name: NetworkManager
+        state: restarted
+      become: true
+      when: nm_config_1.changed or nm_config_2.changed
+
+    - name: Гарантированная загрузка модуля ядра BBR
+      community.general.modprobe:
+        name: tcp_bbr
+        state: present
+      become: true
+      when: mode == 'gaming'
+
+    - name: Оптимизация сетевого стека sysctl для низкого пинга (BBR/FQ)
+      ansible.builtin.copy:
+        dest: /etc/sysctl.d/99-game-ping.conf
+        content: |
+          net.core.default_qdisc = fq
+          net.ipv4.tcp_congestion_control = bbr
+          net.ipv4.tcp_low_latency = 1
+        mode: '0644'
+      become: true
+      when: mode == 'gaming'
+      register: sysctl_gaming
+
+    - name: Удаление игровых настроек sysctl
+      ansible.builtin.file:
+        path: /etc/sysctl.d/99-game-ping.conf
+        state: absent
+      become: true
+      when: mode == 'normal'
+      register: sysctl_normal
+
+    - name: Применение настроек sysctl ядра
+      ansible.builtin.command: sysctl --system
+      become: true
+      changed_when: true
+      when: >
+        (sysctl_gaming is defined and sysctl_gaming.changed) or 
+        (sysctl_normal is defined and sysctl_normal.changed)
+
+    - name: Отображение текущего режима
+      ansible.builtin.debug:
+        msg: "Сеть переведена в режим: [ {{ mode | upper }} ]"
+
+    - name: Проверка пинга до роутера (10 пакетов)
+      ansible.builtin.command: >
+        ping -c 10 {{ ansible_facts['default_ipv4']['gateway'] | default('1.1.1.1') }}
+      register: ping_output
+      changed_when: false
+
+    - name: Вывод результатов тестирования пинга
+      ansible.builtin.debug:
+        var: ping_output.stdout_lines
+
