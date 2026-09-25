@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from abc import ABC, abstractmethod
+import getpass
 import argparse
 import subprocess
 import sys
@@ -6,6 +8,7 @@ import os
 import traceback
 import pathlib
 import webbrowser
+import yaml
 
 
 BIN_DIRECTORY = pathlib.Path("/usr/local/bin")
@@ -15,6 +18,20 @@ PROJECT_DIRECTORY = pathlib.Path.home() / ".test-system-setup"
 INVENTORY_FILE = pathlib.Path("inventory.yml")
 VAULT_PASS_FILE = pathlib.Path(".vault_pass")
 COMMAND_NAME = "test-system-setup"
+
+
+class VaultString(str):
+    @staticmethod
+    def representer(dumper, data):
+        return dumper.represent_scalar("!vault", data, style="|")
+
+    @classmethod
+    def constructor(cls, loader, node):
+        return cls(loader.construct_scalar(node))
+
+
+yaml.SafeDumper.add_representer(VaultString, VaultString.representer)
+yaml.SafeLoader.add_constructor("!vault", VaultString.constructor)
 
 
 class NonInteractiveShellError(Exception):
@@ -52,7 +69,13 @@ def update():
 
 
 def run_ansible(game_mode):
-    command = ["ansible-playbook", "setup-playbook.yml"]
+    command = [
+        "ansible-playbook",
+        "-i",
+        INVENTORY_FILE,
+        "setup-playbook.yml",
+        "--ask-vault-pass",
+    ]
 
     game_mode_str = "true" if game_mode else "false"
     command.extend(["-e", f"setup_game_mode={game_mode_str}"])
@@ -115,8 +138,167 @@ def go_to_project():
             exit(1)
 
 
+class Subparser(ABC):
+    command: str
+    help: str
+    description: str | None = None
+
+    def __new__(cls, subparsers) -> None:
+        subparser = cls._add_self_as_subparser(subparsers)
+        cls.add_args(subparser)
+        subparser.subparsers = subparsers
+        subparser.run = cls.run
+        return subparser
+
+    @classmethod
+    def add_args(cls, subparser) -> None:
+        pass
+
+    @classmethod
+    @abstractmethod
+    def run(cls, args) -> None:
+        pass
+
+    @classmethod
+    def _add_self_as_subparser(cls, subparsers):
+        return subparsers.add_parser(
+            cls.command,
+            help=cls.help,
+            description=cls.description,
+        )
+
+
+class WorkdirParser(Subparser):
+    command = "workdir"
+    help = "Show project working directory"
+
+    @classmethod
+    def run(cls, args) -> None:
+        print(PROJECT_DIRECTORY)
+
+
+class InventoryParser(Subparser):
+    command = "inventory"
+    help = "Update ansible inventory file"
+    description = "TODO"
+
+    @classmethod
+    def add_args(cls, subparser) -> None:
+        subparser.add_argument(
+            "-l",
+            "--local",
+            help="Update local password",
+            action="store_true",
+        )
+        subparser.add_argument(
+            "-i",
+            "--inventory",
+            help="Invenotory file",
+            type=str,
+            default="inventory.yaml",
+        )
+
+    @classmethod
+    def run(cls, args) -> None:
+        default_content = {"all": {"hosts": {}}}
+        try:
+            with open(args.inventory, mode="r") as inventory:
+                content = yaml.safe_load(inventory)
+            print(content)
+        except FileNotFoundError:
+            content = default_content
+        if args.local:
+            password = cls.get_local_password()
+            encrypted_password = cls.enctypt_password(password)
+            content["all"]["hosts"]["localhost"] = {
+                "ansible_connection": "local",
+                "ansible_python_interpreter": "/usr/bin/python3",
+                "ansible_sudo_pass": encrypted_password,
+            }
+        with open(args.inventory, mode="w") as inventory:
+            yaml.safe_dump(
+                content, inventory, default_flow_style=False, sort_keys=False
+            )
+
+    @classmethod
+    def enctypt_password(cls, password: str) -> VaultString:
+        result = subprocess.run(
+            [
+                "ansible-vault",
+                "encrypt_string",
+                "--stdin-name=ansible_sudo_pass",
+            ],
+            input=password,
+            text=True,
+            capture_output=True,
+        )
+        return yaml.safe_load(result.stdout)["ansible_sudo_pass"]
+
+    @classmethod
+    def get_local_password(cls):
+        while True:
+            password = getpass.getpass("Enter the password for your local machine: ")
+            result = subprocess.run(
+                [
+                    "su",
+                    "-c",
+                    '"true"',
+                    getpass.getuser(),
+                ],
+                input=password,
+                text=True,
+                capture_output=True,
+            )
+            if result.returncode == 0:
+                return password
+            print("Incorrect password. Repeat")
+
+
+class RunParser(Subparser):
+    command = "run"
+    help = "Run installation and software configuration"
+
+    @classmethod
+    def add_args(cls, subparser) -> None:
+        subparser.add_argument(
+            "--game",
+            "-g",
+            action="store_true",
+            help="Optimize network drivers for gaming",
+        )
+
+    @classmethod
+    def run(cls, args) -> None:
+        go_to_project()
+        run_ansible(game_mode=args.game)
+
+
+class UpdateParser(Subparser):
+    command = "update"
+    help = "Update system-setup from github"
+    description = None
+
+    @classmethod
+    def add_args(cls, subparser) -> None:
+        pass
+
+    @classmethod
+    def run(cls, args) -> None:
+        pass
+        # TODO: implementation
+
+
+class OpenRepoParser(Subparser):
+    command = "open-repo"
+    help = "Open repo page"
+    description = None
+
+    @classmethod
+    def run(cls, args) -> None:
+        webbrowser.open(PROJECT_URL)
+
+
 def main():
-    go_to_project()
     parser = argparse.ArgumentParser(
         description="Lawrence's system setup CLI tool",
         formatter_class=argparse.RawTextHelpFormatter,
@@ -124,7 +306,8 @@ def main():
 
     subparsers = parser.add_subparsers(dest="command", required=False, help="command")
     help_parser = subparsers.add_parser(
-        "help", help="Show help message for any command"
+        "help",
+        help="Show help message for any command",
     )
     help_parser.add_argument(
         "help_command",
@@ -133,32 +316,18 @@ def main():
         nargs="?",
     )
 
-    run_parser = subparsers.add_parser(
-        "run", help="Run installation and software configuration"
-    )
-    run_parser.add_argument(
-        "--game",
-        "-g",
-        action="store_true",
-        help="Optimize network drivers for gaming",
-    )
-
-    subparsers.add_parser("update", help="Update system-setup from github")
-    subparsers.add_parser("open-repo", help="Open repo page")
-    subparsers.add_parser("workdir", help="Show project working directory")
-    subparsers.add_parser(
-        "recreate-inventory",
-        help="Recreate ansible inventory file",
-        description="Use when you chanched password or forgot the inventory file password",
-    )
-
+    RunParser(subparsers)
+    InventoryParser(subparsers)
+    OpenRepoParser(subparsers)
+    WorkdirParser(subparsers)
+    UpdateParser(subparsers)
     args = parser.parse_args()
 
     if args.command == "help" or not args.command:
-        if args.help_command:
+        if getattr(args, "help_command", None):
             try:
                 subparsers.choices[args.help_command].print_help()
-            except KeyError:
+            except KeyError, AttributeError:
                 print(
                     f"Invalid command '{args.help_command}'"
                     f"use one of {
@@ -172,12 +341,8 @@ def main():
                 exit(0)
         parser.print_help()
         exit(0)
-    if args.command == "open-repo":
-        webbrowser.open(PROJECT_URL)
-    if args.command == "workdir":
-        print(PROJECT_DIRECTORY)
-    if args.command == "install":
-        run_ansible(game_mode=args.game)
+
+    subparsers.choices[args.command].run(args)  # TODO: fix typing
 
 
 if __name__ == "__main__":
