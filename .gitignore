@@ -1,5 +1,4 @@
-inventory.yml
-inventory.yaml
-inventory.toml
-inventory.json
-inventory.tml
+dist_root
+*.rpm
+*.deb
+
