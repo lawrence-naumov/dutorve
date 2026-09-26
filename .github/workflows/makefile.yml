@@ -12,7 +12,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.2'
+        bundler-cache: true
+
+    - name: Install FPM and System Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y rpm binutils
+        gem install fpm
 
     - name: Build
       run: make
+
+    - name: Upload Packages as Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: native-packages
+        path: |
+          *.deb
+          *.rpm
