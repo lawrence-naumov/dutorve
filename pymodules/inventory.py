@@ -5,6 +5,8 @@ from typing import Any
 import click
 import yaml
 
+from pymodules.colors import ColoredCommand
+
 from pymodules.constants import INVENTORY_FILE
 
 
@@ -268,6 +270,7 @@ class InventoryManager:
 
 @click.command(
     "inventory",
+    cls=ColoredCommand,
     help="Manage hosts and groups in the Ansible inventory.",
 )
 @click.argument(

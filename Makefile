@@ -26,18 +26,24 @@ prep: clean
 	mkdir -p $(BIN_DIR)
 
 	cp main.py $(OPT_DIR)/
-	cp -r pymodules/ $(OPT_DIR)/
-	cp -r ansible/ $(OPT_DIR)/
+	cp -r pymodules $(OPT_DIR)/
+	cp -r ansible $(OPT_DIR)/
 
 	cp config.toml $(ETC_DIR)/config.toml
 	cp inventory.yml $(ETC_DIR)/inventory.yml
 
+	@echo "=== Remove Python cache ==="
+
+	find $(OPT_DIR) -type d -name __pycache__ -prune -exec rm -rf {} +
+
 	@echo "=== Create executable ==="
 
-	@echo '#!/bin/bash' > $(BIN_DIR)/$(NAME)
-	@echo 'export DUTORVE_ETC_DIR=/etc/$(NAME)' >> $(BIN_DIR)/$(NAME)
-	@echo 'export DUTORVE_OPT_DIR=/opt/$(NAME)' >> $(BIN_DIR)/$(NAME)
-	@echo 'exec /usr/bin/python3 -u /opt/$(NAME)/main.py "$$@"' >> $(BIN_DIR)/$(NAME)
+	printf '%s\n' \
+		'#!/bin/bash' \
+		'export DUTORVE_ETC_DIR=/etc/$(NAME)' \
+		'export DUTORVE_OPT_DIR=/opt/$(NAME)' \
+		'exec /usr/bin/python3 -u /opt/$(NAME)/main.py "$$@"' \
+		> $(BIN_DIR)/$(NAME)
 
 	chmod +x $(BIN_DIR)/$(NAME)
 
@@ -51,20 +57,19 @@ completion:
 	mkdir -p $(ZSH_COMPLETION)
 	mkdir -p $(FISH_COMPLETION)
 
-	@echo "--- Bash completion ---"
-	_DUTORVE_COMPLETE=bash_source \
-		python3 $(OPT_DIR)/main.py \
-		> $(BASH_COMPLETION)/$(NAME)
+	python3 -m pymodules.completion \
+		$(BUILD_DIR)/generated-completion
 
-	@echo "--- Zsh completion ---"
-	_DUTORVE_COMPLETE=zsh_source \
-		python3 $(OPT_DIR)/main.py \
-		> $(ZSH_COMPLETION)/_$(NAME)
+	cp $(BUILD_DIR)/generated-completion/dutorve.bash \
+		$(BASH_COMPLETION)/dutorve
 
-	@echo "--- Fish completion ---"
-	_DUTORVE_COMPLETE=fish_source \
-		python3 $(OPT_DIR)/main.py \
-		> $(FISH_COMPLETION)/$(NAME).fish
+	cp $(BUILD_DIR)/generated-completion/_dutorve \
+		$(ZSH_COMPLETION)/_dutorve
+
+	cp $(BUILD_DIR)/generated-completion/dutorve.fish \
+		$(FISH_COMPLETION)/dutorve.fish
+
+	rm -rf $(BUILD_DIR)/generated-completion
 
 
 deb: prep

@@ -2,15 +2,19 @@ import subprocess
 
 import click
 
+from pymodules.colors import ColoredCommand
 from pymodules.constants import ANSIBLE_DIRECTORY, INVENTORY_FILE
 
 
-@click.command("run")
+@click.command(
+    "run",
+    cls=ColoredCommand,
+)
 @click.option(
     "--game",
     "-g",
     is_flag=True,
-    help="Optimize network drivers for gaming",
+    help="Optimize network drivers for gaming.",
 )
 def run(game: bool) -> None:
     """Run installation and software configuration."""
