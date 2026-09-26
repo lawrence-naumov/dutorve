@@ -1,5 +1,5 @@
 NAME          := dutorve
-VERSION       := 0.1.0
+VERSION       := 0.1.1
 DESCRIPTION   := Configure machines with prepared ansible playbooks
 MAINTAINER    := Lawrence Naumov <prostolawr@gmail.com>
 
