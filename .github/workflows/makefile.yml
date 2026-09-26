@@ -31,10 +31,11 @@ jobs:
     - name: Build
       run: make
 
-    - name: Upload Packages as Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: native-packages
-        path: |
-          *.deb
-          *.rpm
+    - name: Create GitHub Release and Upload Assets
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh release create ${{ github.ref_name }} \
+          --title "Release ${{ github.ref_name }}" \
+          --generate-notes \
+          *.deb *.rpm
