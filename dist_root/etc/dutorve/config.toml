@@ -1,0 +1,4 @@
+[external]
+project-url = "https://github.com/prostoLavr/ansible-system-setup.git"
+ssh-url = "git@github.com:prostoLavr/ansible-system-setup.git"
+

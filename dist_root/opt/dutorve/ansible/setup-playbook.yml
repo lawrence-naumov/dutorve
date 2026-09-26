@@ -84,6 +84,11 @@
       - socat
       - ebtables
       - iptables
+      - qemu-kvm
+      - libvirt-daemon-kvm
+      - virt-install
+      - cloud-init
+
 
     dnf_gui_packages:
       - alacritty
