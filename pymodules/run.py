@@ -1,39 +1,36 @@
 import subprocess
-import sys
 
-from pymodules.base import Subparser
+import click
+
 from pymodules.constants import ANSIBLE_DIRECTORY, INVENTORY_FILE
 
 
-class RunParser(Subparser):
-    command = "run"
-    help = "Run installation and software configuration"
+@click.command("run")
+@click.option(
+    "--game",
+    "-g",
+    is_flag=True,
+    help="Optimize network drivers for gaming",
+)
+def run(game: bool) -> None:
+    """Run installation and software configuration."""
 
-    def add_args(self) -> None:
-        self.subparser.add_argument(
-            "--game",
-            "-g",
-            action="store_true",
-            help="Optimize network drivers for gaming",
-        )
+    command = [
+        "ansible-playbook",
+        "-i",
+        str(INVENTORY_FILE),
+        str(ANSIBLE_DIRECTORY / "setup-playbook.yml"),
+        "--ask-vault-pass",
+        "-e",
+        f"setup_game_mode={'true' if game else 'false'}",
+    ]
 
-    def run(self, args) -> None:
-        game_mode = args.game
-        command = [
-            "ansible-playbook",
-            "-i",
-            INVENTORY_FILE,
-            ANSIBLE_DIRECTORY / "setup-playbook.yml",
-            "--ask-vault-pass",
-        ]
+    click.echo("Start to install...")
 
-        game_mode_str = "true" if game_mode else "false"
-        command.extend(["-e", f"setup_game_mode={game_mode_str}"])
+    try:
+        subprocess.run(command, check=True)
+    except subprocess.CalledProcessError:
+        click.echo("Ansible Playbook Error", err=True)
+        raise click.exceptions.Exit(1)
 
-        print("Start to install...")
-        try:
-            subprocess.run(command, check=True)
-        except subprocess.CalledProcessError:
-            print("Ansible Playbook Error", file=sys.stderr)
-            sys.exit(1)
-        print("Install success!")
+    click.echo("Install success!")

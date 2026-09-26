@@ -1,4 +1,4 @@
 dist_root
 *.rpm
 *.deb
-
+**/__pycache__
