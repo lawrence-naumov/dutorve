@@ -11,9 +11,6 @@ class Configuration:
     @property
     def bin_directory(self) -> pathlib.Path:
         return pathlib.Path(self.config["bin_directory"])
-    
-    @property
-    def 
 
 
 BIN_DIRECTORY = pathlib.Path("/usr/local/bin")

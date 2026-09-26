@@ -1,7 +1,8 @@
 import subprocess
 import sys
 
-from .base import Subparser
+from pymodules.base import Subparser
+from pymodules.constants import ANSIBLE_DIRECTORY, INVENTORY_FILE
 
 
 class RunParser(Subparser):
@@ -22,7 +23,7 @@ class RunParser(Subparser):
             "ansible-playbook",
             "-i",
             INVENTORY_FILE,
-            "setup-playbook.yml",
+            ANSIBLE_DIRECTORY / "setup-playbook.yml",
             "--ask-vault-pass",
         ]
 

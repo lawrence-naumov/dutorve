@@ -1,10 +1,11 @@
 import getpass
-from typing import Any
-from .base import Subparser
 import subprocess
-
+from typing import Any
 
 import yaml
+
+from pymodules.base import Subparser
+from pymodules.constants import INVENTORY_FILE
 
 
 class VaultString(str):
@@ -37,7 +38,7 @@ class InventoryParser(Subparser):
             "--inventory",
             help="Invenotory file",
             type=str,
-            default="inventory.yml",
+            default=INVENTORY_FILE,
         )
         self.subparser.add_argument(
             "--rm", help="Remove existing values", action="store_true"
@@ -177,9 +178,7 @@ class InventoryParser(Subparser):
         elif args.set_become_password:
             username = args.hostname or getpass.getuser()
             host["ansible_become_pass"] = self._enctypt_password(
-                getpass.getpass(
-                    f"Enter the password for {username} on {host['ansible_host']}: "
-                )
+                getpass.getpass(f"Enter the password for {username}: ")
             )
         if args.use_password_as_become_password:
             host["ansible_become_password"] = "{{ ansible_password }}"
@@ -218,6 +217,7 @@ class InventoryParser(Subparser):
 
     def run(self, args) -> None:
         content = self._read_inventory(args.inventory)
+        print(f"DEBUG {content=}")
         hosts = content["all"]["hosts"]
         groups = content["all"]["children"]
         if not args.hostname:
@@ -241,8 +241,8 @@ class InventoryParser(Subparser):
             with open(inventory_path, mode="r") as inventory:
                 content = yaml.safe_load(inventory)
                 content["all"] = content.get("all", {})
-                content["all"]["hosts"] = content["all"].get("hosts", {})
-                content["all"]["children"] = content["all"].get("children", {})
+                content["all"]["hosts"] = content["all"].get("hosts", {}) or {}
+                content["all"]["children"] = content["all"].get("children", {}) or {}
                 return content
         except FileNotFoundError:
             return default_content
