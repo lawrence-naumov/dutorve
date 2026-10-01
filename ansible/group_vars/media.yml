@@ -1,0 +1,14 @@
+---
+media_packages:
+  - ffmpeg
+  - mediainfo
+  - mkvtoolnix
+  - mkvtoolnix-gui
+  - vlc
+  - mpv
+  - gstreamer1
+  - gstreamer1-plugins-base
+  - gstreamer1-plugins-base-tools
+  - gstreamer1-plugins-good
+  - gstreamer1-plugins-bad-free
+  - gstreamer1-plugin-libav
