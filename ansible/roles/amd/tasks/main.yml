@@ -1,0 +1,6 @@
+---
+- name: Install AMD packages
+  ansible.builtin.package:
+    name: "{{ amd_packages }}"
+    state: present
+

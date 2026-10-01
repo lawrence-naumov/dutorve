@@ -1,0 +1,4 @@
+---
+amd_packages:
+  - rocm-opencl
+  - rocm-hip

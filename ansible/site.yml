@@ -40,6 +40,11 @@
       tags:
         - nvidia
 
+    - role: amd
+      when: "'amd' in group_names"
+      tags:
+        - amd
+
     - role: desktop
       when: "'desktop' in group_names"
       tags:
