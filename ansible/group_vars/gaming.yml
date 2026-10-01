@@ -1,0 +1,7 @@
+---
+gaming_packages:
+  - steam
+
+gaming_flatpaks:
+  - com.usebottles.bottles
+

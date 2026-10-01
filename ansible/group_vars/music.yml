@@ -1,0 +1,9 @@
+---
+music_packages:
+  - pipewire
+  - pipewire-utils
+  - wireplumber
+  - alsa-utils
+  - qpwgraph
+  - easyeffects
+

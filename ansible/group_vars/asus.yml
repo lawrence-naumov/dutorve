@@ -1,0 +1,17 @@
+---
+asus_packages:
+  - asusctl
+  - supergfxctl
+  - switcheroo-control
+  - tuned
+  - tuned-ppd
+  - fwupd
+  - lm_sensors
+  - powertop
+  - nvtop
+  - stress-ng
+  - usbutils
+  - pciutils
+  - vulkan-tools
+  - mesa-demos
+

@@ -1,0 +1,34 @@
+---
+- name: Build Flatpak application list
+  ansible.builtin.set_fact:
+    workstation_flatpaks: >-
+      {{
+        (desktop_flatpaks | default([]))
+        + (gaming_flatpaks | default([]))
+        + (music_flatpaks | default([]))
+        | unique
+      }}
+
+- name: Ensure Flatpak is installed
+  ansible.builtin.dnf5:
+    name: flatpak
+    state: present
+  become: true
+
+- name: Add Flathub
+  community.general.flatpak_remote:
+    name: "{{ desktop_flatpak_remote.name }}"
+    state: present
+    flatpakrepo_url: "{{ desktop_flatpak_remote.url }}"
+    method: system
+  become: true
+
+- name: Install Flatpak applications
+  community.general.flatpak:
+    name: "{{ workstation_flatpaks }}"
+    state: present
+    remote: flathub
+    method: system
+  become: true
+  when: workstation_flatpaks | length > 0
+

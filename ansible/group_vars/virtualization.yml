@@ -1,0 +1,16 @@
+---
+virtualization_packages:
+  - qemu
+  - qemu-kvm
+  - libvirt
+  - libvirt-daemon-kvm
+  - virt-manager
+  - virt-install
+  - bridge-utils
+  - cloud-init
+
+virtualization_package_groups:
+  - "@virtualization"
+
+virtualization_enable_libvirtd: true
+

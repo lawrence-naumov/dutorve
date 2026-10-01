@@ -1,0 +1,26 @@
+---
+os_family_name: Fedora
+
+package_manager: dnf5
+
+remi_repo_url: >-
+  https://rpms.remirepo.net/fedora/remi-release-{{
+    ansible_facts['distribution_major_version']
+  }}.rpm
+
+rpm_fusion_repositories:
+  - >-
+    https://mirrors.rpmfusion.org/free/fedora/
+    rpmfusion-free-release-{{
+      ansible_facts['distribution_major_version']
+    }}.noarch.rpm
+
+  - >-
+    https://mirrors.rpmfusion.org/nonfree/fedora/
+    rpmfusion-nonfree-release-{{
+      ansible_facts['distribution_major_version']
+    }}.noarch.rpm
+
+fedora_workstation_repository:
+  - fedora-workstation-repositories
+

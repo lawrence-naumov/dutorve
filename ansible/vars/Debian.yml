@@ -1,0 +1,55 @@
+---
+packages:
+  - neovim
+  - fish
+  - tmux
+  - git
+  - curl
+  - wget
+  - htop
+  - btop
+  - tree
+  - jq
+  - fd-find
+  - ripgrep
+  - fzf
+  - zoxide
+  - lsof
+  - strace
+  - tcpdump
+  - nmap
+  - bind-utils
+  - rsync
+  - unzip
+  - zip
+
+  - gcc
+  - gcc-c++
+  - clang
+  - llvm
+  - lld
+  - make
+  - cmake
+  - ninja-build
+  - just
+  - pkg-config
+  - python3-devel
+  - python3-pip
+  - openssl-devel
+  - uv
+  - php-cli
+  - php-zip
+  - composer
+
+  - bash-completion
+
+repositories:
+  rpm_fusion:
+    - "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
+    - "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
+
+  remi: >-
+    https://rpms.remirepo.net/fedora/remi-release-{{
+      ansible_facts['distribution_major_version']
+    }}.rpm
+

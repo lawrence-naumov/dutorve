@@ -1,0 +1,22 @@
+---
+setup_username: "{{ ansible_user | default(lookup('env', 'USER')) }}"
+
+nvim_configuration_repo: "git@github.com:prostoLavr/lazy.git"
+
+terraform_version: "1.9.8"
+terragrunt_version: "1.1.1"
+minikube_version: "1.38.1"
+
+arduino_ide_version: "2.3.2"
+arduino_install_dir: "/opt/arduino-ide"
+
+binary_arch_map:
+  x86_64: amd64
+  aarch64: arm64
+
+binary_arch: >-
+  {{
+    binary_arch_map[ansible_facts['architecture']]
+    | default('')
+  }}
+

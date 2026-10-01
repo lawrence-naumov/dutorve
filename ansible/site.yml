@@ -1,0 +1,107 @@
+---
+- name: Configure workstation
+  hosts: all
+  connection: local
+  gather_facts: true
+
+  vars_files:
+    - "{{ playbook_dir }}/vars/{{ ansible_facts['distribution'] }}.yml"
+
+  pre_tasks:
+
+    - name: Validate supported distribution
+      ansible.builtin.assert:
+        that:
+          - ansible_facts['distribution'] in ['Fedora']
+        fail_msg: >-
+          Unsupported distribution:
+          {{ ansible_facts['distribution'] }}
+
+    - name: Validate supported architecture
+      ansible.builtin.assert:
+        that:
+          - ansible_facts['architecture'] in ['x86_64', 'aarch64']
+        fail_msg: >-
+          Unsupported architecture:
+          {{ ansible_facts['architecture'] }}
+
+    - name: Validate setup user
+      ansible.builtin.assert:
+        that:
+          - setup_username is defined
+          - setup_username | length > 0
+        fail_msg: "setup_username must be defined."
+
+  tasks:
+
+    - name: Configure repositories
+      ansible.builtin.include_tasks:
+        file: "{{ playbook_dir }}/tasks/repositories.yml"
+
+    - name: Install packages
+      ansible.builtin.include_tasks:
+        file: "{{ playbook_dir }}/tasks/packages.yml"
+
+    - name: Configure shell
+      ansible.builtin.include_tasks:
+        file: "{{ playbook_dir }}/tasks/shell.yml"
+      when: "'cli' in group_names"
+
+    - name: Configure Neovim
+      ansible.builtin.include_tasks:
+        file: "{{ playbook_dir }}/tasks/neovim.yml"
+      when: "'cli' in group_names"
+
+    - name: Configure Docker
+      ansible.builtin.include_tasks:
+        file: "{{ playbook_dir }}/tasks/docker.yml"
+      when: "'containers' in group_names"
+
+    - name: Configure virtualization
+      ansible.builtin.include_tasks:
+        file: "{{ playbook_dir }}/tasks/virtualization.yml"
+      when: "'virtualization' in group_names"
+
+    - name: Configure NVIDIA
+      ansible.builtin.include_tasks:
+        file: "{{ playbook_dir }}/tasks/nvidia.yml"
+      when: "'nvidia' in group_names"
+
+    - name: Configure Flatpak
+      ansible.builtin.include_tasks:
+        file: "{{ playbook_dir }}/tasks/flatpak.yml"
+      when:
+        - "'desktop' in group_names or
+           'gaming' in group_names or
+           'music' in group_names"
+
+    - name: Install Terraform
+      ansible.builtin.include_tasks:
+        file: "{{ playbook_dir }}/tasks/terraform.yml"
+      when: "'dev' in group_names"
+
+    - name: Install Terragrunt
+      ansible.builtin.include_tasks:
+        file: "{{ playbook_dir }}/tasks/terragrunt.yml"
+      when: "'dev' in group_names"
+
+    - name: Install Minikube
+      ansible.builtin.include_tasks:
+        file: "{{ playbook_dir }}/tasks/minikube.yml"
+      when: "'containers' in group_names"
+
+    - name: Configure Arduino
+      ansible.builtin.include_tasks:
+        file: "{{ playbook_dir }}/tasks/arduino.yml"
+      when: "'arduino' in group_names"
+
+    - name: Configure firmware
+      ansible.builtin.include_tasks:
+        file: "{{ playbook_dir }}/tasks/firmware.yml"
+      when: "'firmware' in group_names"
+
+    - name: Configure ASUS
+      ansible.builtin.include_tasks:
+        file: "{{ playbook_dir }}/tasks/asus.yml"
+      when: "'asus' in group_names"
+

@@ -1,0 +1,44 @@
+---
+packages:
+  - neovim
+  - fish
+  - tmux
+  - git
+  - curl
+  - wget
+  - htop
+  - btop
+  - tree
+  - jq
+  - fd
+  - ripgrep
+  - fzf
+  - zoxide
+  - lsof
+  - strace
+  - tcpdump
+  - nmap
+  - bind
+  - rsync
+  - unzip
+  - zip
+
+  - gcc
+  - clang
+  - llvm
+  - lld
+  - make
+  - cmake
+  - ninja
+  - pkgconf
+  - python
+  - python-pip
+  - openssl
+  - php
+  - php-zip
+  - composer
+
+  - bash-completion
+
+repositories: {}
+

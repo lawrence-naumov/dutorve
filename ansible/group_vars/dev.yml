@@ -1,0 +1,20 @@
+---
+dev_packages:
+  - gcc
+  - gcc-c++
+  - clang
+  - llvm
+  - lld
+  - make
+  - cmake
+  - ninja-build
+  - just
+  - pkg-config
+  - python3-devel
+  - python3-pip
+  - openssl-devel
+  - uv
+  - php-cli
+  - php-zip
+  - composer
+

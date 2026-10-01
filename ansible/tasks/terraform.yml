@@ -1,0 +1,57 @@
+---
+- name: Check installed Terraform
+  ansible.builtin.command:
+    cmd: terraform version
+  register: terraform_installed
+  changed_when: false
+  failed_when: false
+
+- name: Install Terraform
+  when: >
+    terraform_installed.rc != 0 or
+    ('Terraform v' ~ terraform_version) not in terraform_installed.stdout
+  block:
+
+    - name: Define Terraform URL
+      ansible.builtin.set_fact:
+        terraform_download_url: >-
+          https://releases.hashicorp.com/terraform/
+          {{ terraform_version }}/terraform_
+          {{ terraform_version }}_linux_{{ binary_arch }}.zip
+
+    - name: Create temporary directory
+      ansible.builtin.tempfile:
+        state: directory
+        prefix: terraform-
+      register: terraform_tmp
+      become: true
+
+    - name: Download Terraform
+      ansible.builtin.get_url:
+        url: "{{ terraform_download_url | replace('\n', '') | replace(' ', '') }}"
+        dest: "{{ terraform_tmp.path }}/terraform.zip"
+        mode: "0644"
+      become: true
+
+    - name: Extract Terraform
+      ansible.builtin.unarchive:
+        src: "{{ terraform_tmp.path }}/terraform.zip"
+        dest: "{{ terraform_tmp.path }}"
+        remote_src: true
+      become: true
+
+    - name: Install Terraform
+      ansible.builtin.copy:
+        src: "{{ terraform_tmp.path }}/terraform"
+        dest: /usr/local/bin/terraform
+        owner: root
+        group: root
+        mode: "0755"
+      become: true
+
+    - name: Remove temporary directory
+      ansible.builtin.file:
+        path: "{{ terraform_tmp.path }}"
+        state: absent
+      become: true
+

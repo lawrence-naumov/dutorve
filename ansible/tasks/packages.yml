@@ -1,0 +1,34 @@
+---
+- name: Build requested package list
+  ansible.builtin.set_fact:
+    workstation_packages: >-
+      {{
+        (cli_packages | default([]))
+        + (dev_packages | default([]))
+        + (containers_packages | default([]))
+        + (virtualization_packages | default([]))
+        + (nvidia_packages | default([]))
+        + (desktop_packages | default([]))
+        + (gaming_packages | default([]))
+        + (music_packages | default([]))
+        + (arduino_packages | default([]))
+        + (network_packages | default([]))
+        + (asus_packages | default([]))
+        + (firmware_packages | default([]))
+        | unique
+      }}
+
+- name: Install workstation packages
+  ansible.builtin.dnf5:
+    name: "{{ workstation_packages }}"
+    state: present
+    update_cache: true
+  become: true
+
+- name: Install virtualization package group
+  ansible.builtin.dnf5:
+    name: "{{ virtualization_package_groups }}"
+    state: present
+  become: true
+  when: "'virtualization' in group_names"
+

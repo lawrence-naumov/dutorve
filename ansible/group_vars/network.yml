@@ -1,0 +1,5 @@
+---
+network_packages:
+  - wireguard-tools
+  - openvpn
+

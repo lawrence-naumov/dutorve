@@ -1,0 +1,56 @@
+---
+- name: Fedora repositories
+  when: ansible_facts['distribution'] == 'Fedora'
+  block:
+
+    - name: Install RPM Fusion repositories
+      ansible.builtin.dnf5:
+        name: "{{ rpm_fusion_repositories }}"
+        state: present
+      become: true
+      when:
+        - "'desktop' in group_names or
+           'gaming' in group_names or
+           'nvidia' in group_names"
+
+    - name: Install Fedora Workstation repositories
+      ansible.builtin.dnf5:
+        name: "{{ fedora_workstation_repository }}"
+        state: present
+      become: true
+      when: "'desktop' in group_names"
+
+    - name: Install Docker repository
+      ansible.builtin.get_url:
+        url: "https://download.docker.com/linux/fedora/docker-ce.repo"
+        dest: "/etc/yum.repos.d/docker-ce.repo"
+        mode: "0644"
+      become: true
+      when: "'containers' in group_names"
+
+    - name: Enable Google Chrome repository
+      ansible.builtin.command:
+        argv:
+          - dnf
+          - config-manager
+          - setopt
+          - google-chrome.enabled=1
+      become: true
+      changed_when: false
+      when: "'desktop' in group_names"
+
+    - name: Enable NVIDIA COPR
+      community.general.copr:
+        name: "{{ item }}"
+        state: enabled
+      loop: "{{ nvidia_copr_repositories | default([]) }}"
+      become: true
+      when: "'nvidia' in group_names"
+
+    - name: Install Remi repository
+      ansible.builtin.dnf5:
+        name: "{{ remi_repo_url }}"
+        state: present
+      become: true
+      when: "'dev' in group_names"
+

@@ -1,0 +1,13 @@
+---
+- name: Enable ASUS services
+  ansible.builtin.service:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - supergfxd
+    - switcheroo-control
+    - tuned
+  become: true
+  failed_when: false
+

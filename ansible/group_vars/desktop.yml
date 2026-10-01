@@ -1,0 +1,17 @@
+---
+desktop_packages:
+  - alacritty
+  - fedora-workstation-repositories
+  - google-chrome-stable
+
+desktop_flatpaks:
+  - org.telegram.desktop
+  - md.obsidian.Obsidian
+  - com.mikrotik.WinBox
+  - com.belmoussaoui.Authenticator
+  - com.discordapp.Discord
+
+desktop_flatpak_remote:
+  name: flathub
+  url: "https://dl.flathub.org/repo/flathub.flatpakrepo"
+

@@ -1,0 +1,29 @@
+---
+- name: Configure distribution repositories
+  ansible.builtin.include_tasks:
+    file: "{{ playbook_dir }}/tasks/repositories.yml"
+
+- name: Install packages
+  ansible.builtin.include_tasks:
+    file: "{{ playbook_dir }}/tasks/packages.yml"
+
+- name: Configure shell
+  ansible.builtin.include_tasks:
+    file: "{{ playbook_dir }}/tasks/shell.yml"
+
+- name: Configure Neovim
+  ansible.builtin.include_tasks:
+    file: "{{ playbook_dir }}/tasks/neovim.yml"
+
+- name: Install Terraform
+  ansible.builtin.include_tasks:
+    file: "{{ playbook_dir }}/tasks/terraform.yml"
+
+- name: Install Terragrunt
+  ansible.builtin.include_tasks:
+    file: "{{ playbook_dir }}/tasks/terragrunt.yml"
+
+- name: Install Minikube
+  ansible.builtin.include_tasks:
+    file: "{{ playbook_dir }}/tasks/minikube.yml"
+
