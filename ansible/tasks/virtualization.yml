@@ -1,9 +1,0 @@
----
-- name: Enable and start libvirtd
-  ansible.builtin.service:
-    name: libvirtd
-    enabled: true
-    state: started
-  become: true
-  when: virtualization_enable_libvirtd | bool
-

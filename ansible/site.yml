@@ -70,6 +70,21 @@
       tags:
         - asus
 
+    - role: media
+      when: "'media' in group_names"
+      tags:
+        - media
+
+    - role: music
+      when: "'music' in group_names"
+      tags:
+        - music
+
+    - role: music
+      when: "'music' in group_names"
+      tags:
+        - music
+
     - role: music
       when: "'music' in group_names"
       tags:
