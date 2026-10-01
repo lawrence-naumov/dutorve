@@ -9,4 +9,5 @@ flatpak_applications:
   - com.usebottles.bottles
   - com.belmoussaoui.Authenticator
   - com.discordapp.Discord
+  - com.spotify.Client
 
