@@ -1,0 +1,34 @@
+---
+- name: Validate operating system
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.distribution in common_supported_distributions
+    fail_msg: >-
+      Unsupported distribution:
+      {{ ansible_facts.distribution }}.
+      Supported distributions:
+      {{ common_supported_distributions | join(', ') }}
+
+- name: Validate CPU architecture
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.architecture in supported_architectures
+    fail_msg: >-
+      Unsupported architecture:
+      {{ ansible_facts.architecture }}.
+      Supported architectures:
+      {{ supported_architectures | join(', ') }}
+
+- name: Install common packages
+  ansible.builtin.package:
+    name: "{{ common_packages }}"
+    state: present
+
+- name: Ensure local binary directory exists
+  ansible.builtin.file:
+    path: "{{ local_bin_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+

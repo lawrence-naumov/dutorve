@@ -1,0 +1,24 @@
+---
+- name: Install browser repositories
+  ansible.builtin.package:
+    name: "{{ browser_repositories }}"
+    state: present
+  become: true
+
+- name: Enable Google Chrome repository
+  ansible.builtin.command:
+    argv:
+      - dnf
+      - config-manager
+      - setopt
+      - google-chrome.enabled=1
+  register: chrome_repo
+  changed_when: false
+  become: true
+
+- name: Install browser packages
+  ansible.builtin.package:
+    name: "{{ browser_packages }}"
+    state: present
+  become: true
+

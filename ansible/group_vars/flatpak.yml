@@ -1,0 +1,12 @@
+---
+flatpak_remote_name: flathub
+flatpak_remote_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+
+flatpak_applications:
+  - org.telegram.desktop
+  - md.obsidian.Obsidian
+  - com.mikrotik.WinBox
+  - com.usebottles.bottles
+  - com.belmoussaoui.Authenticator
+  - com.discordapp.Discord
+

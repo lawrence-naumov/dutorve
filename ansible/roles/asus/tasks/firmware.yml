@@ -1,0 +1,7 @@
+---
+- name: Enable fwupd service
+  ansible.builtin.systemd_service:
+    name: fwupd
+    enabled: true
+    state: started
+

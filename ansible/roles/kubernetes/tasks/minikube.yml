@@ -1,0 +1,26 @@
+---
+- name: Check installed Minikube version
+  ansible.builtin.command:
+    cmd: "{{ minikube_install_path }} version --output=json"
+  register: minikube_installed
+  changed_when: false
+  failed_when: false
+
+- name: Determine whether Minikube installation is required
+  ansible.builtin.set_fact:
+    minikube_install_required: >-
+      {{
+        minikube_installed.rc != 0
+        or
+        ('"version": "' ~ minikube_version ~ '"') not in minikube_installed.stdout
+      }}
+
+- name: Download Minikube
+  ansible.builtin.get_url:
+    url: "{{ minikube_download_url }}"
+    dest: "{{ minikube_install_path }}"
+    owner: root
+    group: root
+    mode: "0755"
+  when: minikube_install_required
+

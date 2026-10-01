@@ -1,0 +1,6 @@
+---
+- name: Install gaming packages
+  ansible.builtin.package:
+    name: "{{ gaming_packages }}"
+    state: present
+

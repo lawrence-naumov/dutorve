@@ -1,0 +1,9 @@
+---
+- name: Install Docker repository
+  ansible.builtin.get_url:
+    url: "{{ docker_repository_url }}"
+    dest: /etc/yum.repos.d/docker-ce.repo
+    owner: root
+    group: root
+    mode: "0644"
+

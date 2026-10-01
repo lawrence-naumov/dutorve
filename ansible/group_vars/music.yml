@@ -1,9 +1,11 @@
 ---
 music_packages:
   - pipewire
-  - pipewire-utils
+  - pipewire-alsa
+  - pipewire-pulseaudio
   - wireplumber
   - alsa-utils
+  - pavucontrol
+  - helvum
   - qpwgraph
-  - easyeffects
 

@@ -1,0 +1,10 @@
+---
+- name: Install NVIDIA Container Toolkit repository
+  ansible.builtin.get_url:
+    url: "{{ nvidia_repository_url }}"
+    dest: /etc/yum.repos.d/nvidia-container-toolkit.repo
+    owner: root
+    group: root
+    mode: "0644"
+  when: nvidia_repository_url | length > 0
+

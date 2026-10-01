@@ -3,13 +3,14 @@ nvidia_packages:
   - akmod-nvidia
   - xorg-x11-drv-nvidia-cuda
   - nvidia-modprobe
-  - nvidia-container-toolkit
-  - nvidia-container-toolkit-selinux
   - kernel-devel
   - kernel-headers
 
-nvidia_copr_repositories:
-  - "@ai-ml/nvidia-container-toolkit"
+nvidia_container_packages:
+  - nvidia-container-toolkit
 
-nvidia_cdi_config: "/etc/cdi/nvidia.yaml"
+nvidia_repository_url: >-
+  https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
+
+nvidia_cdi_output: /etc/cdi/nvidia.yaml
 

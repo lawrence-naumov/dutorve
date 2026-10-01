@@ -9,8 +9,6 @@ virtualization_packages:
   - bridge-utils
   - cloud-init
 
-virtualization_package_groups:
-  - "@virtualization"
-
-virtualization_enable_libvirtd: true
+virtualization_groups:
+  - libvirt
 

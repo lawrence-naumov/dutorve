@@ -1,0 +1,20 @@
+---
+common_supported_distributions:
+  - Fedora
+
+common_packages:
+  - curl
+  - wget
+  - git
+  - unzip
+  - zip
+  - rsync
+  - jq
+  - tree
+  - lsof
+  - strace
+  - htop
+  - btop
+
+common_shell: /bin/bash
+

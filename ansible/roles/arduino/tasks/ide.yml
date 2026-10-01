@@ -1,0 +1,100 @@
+---
+- name: Check installed Arduino IDE
+  ansible.builtin.stat:
+    path: "{{ arduino_install_dir }}/resources/app/package.json"
+  register: arduino_package_json
+
+- name: Read installed Arduino IDE package metadata
+  ansible.builtin.slurp:
+    src: "{{ arduino_install_dir }}/resources/app/package.json"
+  register: arduino_package_metadata
+  when: arduino_package_json.stat.exists
+
+- name: Determine whether Arduino IDE installation is required
+  ansible.builtin.set_fact:
+    arduino_install_required: >-
+      {{
+        not arduino_package_json.stat.exists
+        or
+        (
+          arduino_package_metadata.content
+          | b64decode
+          | from_json
+        ).version != arduino_ide_version
+      }}
+
+- name: Create temporary Arduino IDE directory
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: arduino-ide
+  register: arduino_tmp_dir
+  when: arduino_install_required
+
+- name: Download Arduino IDE archive
+  ansible.builtin.get_url:
+    url: "{{ arduino_ide_download_url }}"
+    dest: "{{ arduino_tmp_dir.path }}/arduino-ide.zip"
+    mode: "0644"
+  when: arduino_install_required
+
+- name: Create temporary Arduino IDE extraction directory
+  ansible.builtin.file:
+    path: "{{ arduino_tmp_dir.path }}/extracted"
+    state: directory
+    mode: "0755"
+  when: arduino_install_required
+
+- name: Extract Arduino IDE archive
+  ansible.builtin.unarchive:
+    src: "{{ arduino_tmp_dir.path }}/arduino-ide.zip"
+    dest: "{{ arduino_tmp_dir.path }}/extracted"
+    remote_src: true
+  when: arduino_install_required
+
+- name: Find extracted Arduino IDE directory
+  ansible.builtin.find:
+    paths: "{{ arduino_tmp_dir.path }}/extracted"
+    file_type: directory
+    recurse: false
+  register: arduino_extracted_dirs
+  when: arduino_install_required
+
+- name: Fail if Arduino IDE archive structure is unexpected
+  ansible.builtin.assert:
+    that:
+      - arduino_extracted_dirs.files | length == 1
+    fail_msg: >-
+      Expected exactly one top-level directory in the Arduino IDE archive,
+      found {{ arduino_extracted_dirs.files | length }}.
+  when: arduino_install_required
+
+- name: Remove old Arduino IDE installation
+  ansible.builtin.file:
+    path: "{{ arduino_install_dir }}"
+    state: absent
+  when: arduino_install_required
+
+- name: Install Arduino IDE
+  ansible.builtin.copy:
+    src: "{{ arduino_extracted_dirs.files[0].path }}/"
+    dest: "{{ arduino_install_dir }}/"
+    owner: root
+    group: root
+    mode: preserve
+    remote_src: true
+  when: arduino_install_required
+
+- name: Remove temporary Arduino IDE directory
+  ansible.builtin.file:
+    path: "{{ arduino_tmp_dir.path }}"
+    state: absent
+  when: arduino_install_required
+
+- name: Create Arduino IDE executable symlink
+  ansible.builtin.file:
+    src: "{{ arduino_install_dir }}/arduino-ide"
+    dest: "{{ local_bin_dir }}/arduino-ide"
+    state: link
+    owner: root
+    group: root
+

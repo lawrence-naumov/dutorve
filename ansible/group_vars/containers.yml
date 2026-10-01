@@ -8,16 +8,6 @@ containers_packages:
   - podman
   - podman-compose
 
-  - conntrack
-  - cri-tools
-  - crictl
-  - socat
-  - ebtables
-  - iptables
-
-containers_enable_docker: true
-
-containers_docker_repository:
-  url: "https://download.docker.com/linux/fedora/docker-ce.repo"
-  dest: "/etc/yum.repos.d/docker-ce.repo"
+docker_repository_url: "https://download.docker.com/linux/fedora/docker-ce.repo"
+docker_service_name: docker
 

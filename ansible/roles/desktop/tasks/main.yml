@@ -1,0 +1,6 @@
+---
+- name: Install desktop packages
+  ansible.builtin.package:
+    name: "{{ desktop_packages }}"
+    state: present
+

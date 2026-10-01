@@ -1,0 +1,13 @@
+---
+kubernetes_packages:
+  - conntrack
+  - cri-tools
+  - socat
+  - ebtables
+  - iptables
+
+minikube_version: "1.38.1"
+
+minikube_download_url: >-
+  https://storage.googleapis.com/minikube/releases/v{{ minikube_version }}/minikube-linux-amd64
+

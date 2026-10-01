@@ -1,0 +1,13 @@
+---
+arduino_ide_version: ""
+
+arduino_install_dir: /opt/arduino-ide
+
+arduino_ide_download_url: ""
+
+arduino_packages: []
+
+arduino_user_config_dir: "{{ ansible_facts['user_dir'] }}/.arduinoIDE"
+
+arduino_board_manager_urls: []
+

@@ -1,0 +1,10 @@
+---
+profile: production
+
+exclude_paths:
+  - .git/
+  - .github/
+
+skip_list:
+  - name[template]
+

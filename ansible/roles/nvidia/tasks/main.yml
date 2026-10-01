@@ -1,0 +1,19 @@
+---
+- name: Configure NVIDIA repository
+  ansible.builtin.include_tasks:
+    file: repository.yml
+
+- name: Install NVIDIA packages
+  ansible.builtin.package:
+    name: "{{ nvidia_packages }}"
+    state: present
+
+- name: Install NVIDIA Container Toolkit
+  ansible.builtin.include_tasks:
+    file: container-toolkit.yml
+  when: nvidia_container_packages | length > 0
+
+- name: Generate NVIDIA CDI configuration
+  ansible.builtin.include_tasks:
+    file: cdi.yml
+

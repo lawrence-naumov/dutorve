@@ -15,3 +15,8 @@ asus_packages:
   - vulkan-tools
   - mesa-demos
 
+asus_services:
+  - supergfxd
+  - switcheroo-control
+  - tuned
+

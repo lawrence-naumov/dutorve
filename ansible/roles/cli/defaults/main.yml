@@ -1,0 +1,8 @@
+---
+cli_packages: []
+
+cli_shell: /bin/bash
+
+nvim_configuration_repo: ""
+nvim_configuration_path: "{{ ansible_user_dir }}/.config/nvim"
+

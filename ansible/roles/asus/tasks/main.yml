@@ -1,0 +1,15 @@
+---
+- name: Install ASUS and hardware packages
+  ansible.builtin.package:
+    name: "{{ asus_packages }}"
+    state: present
+
+- name: Configure ASUS services
+  ansible.builtin.include_tasks:
+    file: services.yml
+  when: asus_services | length > 0
+
+- name: Configure firmware metadata
+  ansible.builtin.include_tasks:
+    file: firmware.yml
+

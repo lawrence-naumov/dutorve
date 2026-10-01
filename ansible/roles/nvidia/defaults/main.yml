@@ -1,0 +1,11 @@
+---
+nvidia_packages: []
+
+nvidia_container_packages: []
+
+nvidia_repository_url: ""
+
+nvidia_cdi_output: /etc/cdi/nvidia.yaml
+
+nvidia_configure_container_runtime: true
+

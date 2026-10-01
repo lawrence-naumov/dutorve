@@ -1,0 +1,38 @@
+---
+- name: Ensure Arduino user configuration directory exists
+  ansible.builtin.file:
+    path: "{{ arduino_user_config_dir }}"
+    state: directory
+    mode: "0755"
+  become_user: "{{ setup_username }}"
+
+- name: Configure Arduino CLI board manager
+  ansible.builtin.copy:
+    dest: "{{ arduino_user_config_dir }}/arduino-cli.yaml"
+    content: |
+      board_manager:
+        additional_urls:
+      {% for url in arduino_board_manager_urls %}
+          - {{ url }}
+      {% endfor %}
+    mode: "0644"
+  become_user: "{{ setup_username }}"
+
+- name: Create Arduino IDE desktop entry
+  ansible.builtin.copy:
+    dest: /usr/share/applications/arduino-ide.desktop
+    content: |
+      [Desktop Entry]
+      Type=Application
+      Name=Arduino IDE
+      GenericName=Arduino IDE
+      Comment=Open-source electronics prototyping platform
+      Exec={{ local_bin_dir }}/arduino-ide %F
+      Icon={{ arduino_install_dir }}/resources/app/lib/backend/resources/arduino.png
+      Terminal=false
+      Categories=Development;Engineering;
+      MimeType=text/x-arduino;
+    owner: root
+    group: root
+    mode: "0644"
+

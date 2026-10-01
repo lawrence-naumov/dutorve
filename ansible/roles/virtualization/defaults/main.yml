@@ -1,0 +1,9 @@
+---
+virtualization_packages: []
+
+virtualization_groups:
+  - libvirt
+
+virtualization_services:
+  - libvirtd
+

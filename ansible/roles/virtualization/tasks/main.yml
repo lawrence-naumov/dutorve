@@ -1,0 +1,10 @@
+---
+- name: Install virtualization packages
+  ansible.builtin.package:
+    name: "{{ virtualization_packages }}"
+    state: present
+
+- name: Configure virtualization
+  ansible.builtin.include_tasks:
+    file: libvirt.yml
+

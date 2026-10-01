@@ -1,0 +1,7 @@
+---
+browser_packages:
+  - google-chrome-stable
+
+browser_repositories:
+  - fedora-workstation-repositories
+

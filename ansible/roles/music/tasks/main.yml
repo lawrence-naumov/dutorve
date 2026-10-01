@@ -1,0 +1,6 @@
+---
+- name: Install music and audio packages
+  ansible.builtin.package:
+    name: "{{ music_packages }}"
+    state: present
+

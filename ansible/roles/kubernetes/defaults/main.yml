@@ -1,0 +1,9 @@
+---
+kubernetes_packages: []
+
+minikube_version: ""
+
+minikube_download_url: ""
+
+minikube_install_path: "{{ local_bin_dir }}/minikube"
+

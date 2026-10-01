@@ -1,12 +1,17 @@
 ---
+arduino_ide_version: "2.3.2"
+
+arduino_install_dir: /opt/arduino-ide
+
+arduino_ide_download_url: >-
+  https://downloads.arduino.cc/arduino-ide/arduino-ide_{{ arduino_ide_version }}_Linux_64bit.zip
+
 arduino_packages:
   - python3-pyserial
   - libnsl
 
-arduino_esp32_board_manager_url:
-  "https://espressif.github.io/arduino-esp32/package_esp32_index.json"
+arduino_user_config_dir: "{{ ansible_facts['user_dir'] }}/.arduinoIDE"
 
-arduino_download_url: >-
-  https://downloads.arduino.cc/arduino-ide/
-  arduino-ide_{{ arduino_ide_version }}_Linux_64bit.zip
+arduino_board_manager_urls:
+  - https://espressif.github.io/arduino-esp32/package_esp32_index.json
 

@@ -1,0 +1,13 @@
+---
+- name: Install Kubernetes packages
+  ansible.builtin.package:
+    name: "{{ kubernetes_packages }}"
+    state: present
+
+- name: Install Minikube
+  ansible.builtin.include_tasks:
+    file: minikube.yml
+  when:
+    - minikube_version | length > 0
+    - minikube_download_url | length > 0
+

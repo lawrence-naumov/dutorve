@@ -3,24 +3,14 @@ cli_packages:
   - neovim
   - fish
   - tmux
-  - git
-  - curl
-  - wget
-  - htop
-  - btop
-  - tree
-  - jq
+  - fzf
   - fd-find
   - ripgrep
-  - fzf
   - zoxide
-  - lsof
-  - strace
-  - tcpdump
-  - nmap
-  - bind-utils
-  - rsync
-  - unzip
-  - zip
-  - bash-completion
+  - tree
+
+cli_shell: /usr/bin/fish
+
+nvim_configuration_repo: "https://github.com/prostoLavr/lazy.git"
+nvim_configuration_path: "{{ ansible_facts['user_dir'] }}/.config/nvim"
 

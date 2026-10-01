@@ -1,0 +1,17 @@
+---
+- name: Ensure Neovim configuration parent directory exists
+  ansible.builtin.file:
+    path: "{{ nvim_configuration_path | dirname }}"
+    state: directory
+    mode: "0755"
+  become_user: "{{ setup_username }}"
+
+- name: Clone Neovim configuration
+  ansible.builtin.git:
+    repo: "{{ nvim_configuration_repo }}"
+    dest: "{{ nvim_configuration_path }}"
+    clone: true
+    update: false
+    version: HEAD
+  become_user: "{{ setup_username }}"
+

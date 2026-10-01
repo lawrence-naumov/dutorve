@@ -1,0 +1,9 @@
+---
+- name: Download Terragrunt
+  ansible.builtin.get_url:
+    url: "{{ terragrunt_download_url }}"
+    dest: "{{ local_bin_dir }}/terragrunt"
+    owner: root
+    group: root
+    mode: "0755"
+

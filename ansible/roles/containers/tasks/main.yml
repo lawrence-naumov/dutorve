@@ -1,0 +1,15 @@
+---
+- name: Configure Docker repository
+  ansible.builtin.include_tasks:
+    file: repository.yml
+  when: docker_repository_url | length > 0
+
+- name: Install container packages
+  ansible.builtin.package:
+    name: "{{ containers_packages }}"
+    state: present
+
+- name: Configure Docker service
+  ansible.builtin.include_tasks:
+    file: docker.yml
+

@@ -1,0 +1,20 @@
+---
+- name: Install development packages
+  ansible.builtin.package:
+    name: "{{ dev_packages }}"
+    state: present
+
+- name: Install Terraform
+  ansible.builtin.include_tasks:
+    file: terraform.yml
+  when:
+    - terraform_version | length > 0
+    - terraform_download_url | length > 0
+
+- name: Install Terragrunt
+  ansible.builtin.include_tasks:
+    file: terragrunt.yml
+  when:
+    - terragrunt_version | length > 0
+    - terragrunt_download_url | length > 0
+

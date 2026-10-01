@@ -1,107 +1,77 @@
 ---
 - name: Configure workstation
-  hosts: all
-  connection: local
+  hosts: workstation
+  become: true
   gather_facts: true
 
-  vars_files:
-    - "{{ playbook_dir }}/vars/{{ ansible_facts['distribution'] }}.yml"
+  roles:
+    - role: common
+      tags:
+        - common
+        - always
 
-  pre_tasks:
-
-    - name: Validate supported distribution
-      ansible.builtin.assert:
-        that:
-          - ansible_facts['distribution'] in ['Fedora']
-        fail_msg: >-
-          Unsupported distribution:
-          {{ ansible_facts['distribution'] }}
-
-    - name: Validate supported architecture
-      ansible.builtin.assert:
-        that:
-          - ansible_facts['architecture'] in ['x86_64', 'aarch64']
-        fail_msg: >-
-          Unsupported architecture:
-          {{ ansible_facts['architecture'] }}
-
-    - name: Validate setup user
-      ansible.builtin.assert:
-        that:
-          - setup_username is defined
-          - setup_username | length > 0
-        fail_msg: "setup_username must be defined."
-
-  tasks:
-
-    - name: Configure repositories
-      ansible.builtin.include_tasks:
-        file: "{{ playbook_dir }}/tasks/repositories.yml"
-
-    - name: Install packages
-      ansible.builtin.include_tasks:
-        file: "{{ playbook_dir }}/tasks/packages.yml"
-
-    - name: Configure shell
-      ansible.builtin.include_tasks:
-        file: "{{ playbook_dir }}/tasks/shell.yml"
+    - role: cli
       when: "'cli' in group_names"
+      tags:
+        - cli
 
-    - name: Configure Neovim
-      ansible.builtin.include_tasks:
-        file: "{{ playbook_dir }}/tasks/neovim.yml"
-      when: "'cli' in group_names"
+    - role: dev
+      when: "'dev' in group_names"
+      tags:
+        - dev
 
-    - name: Configure Docker
-      ansible.builtin.include_tasks:
-        file: "{{ playbook_dir }}/tasks/docker.yml"
+    - role: containers
       when: "'containers' in group_names"
+      tags:
+        - containers
 
-    - name: Configure virtualization
-      ansible.builtin.include_tasks:
-        file: "{{ playbook_dir }}/tasks/virtualization.yml"
+    - role: kubernetes
+      when: "'kubernetes' in group_names"
+      tags:
+        - kubernetes
+
+    - role: virtualization
       when: "'virtualization' in group_names"
+      tags:
+        - virtualization
 
-    - name: Configure NVIDIA
-      ansible.builtin.include_tasks:
-        file: "{{ playbook_dir }}/tasks/nvidia.yml"
+    - role: nvidia
       when: "'nvidia' in group_names"
+      tags:
+        - nvidia
 
-    - name: Configure Flatpak
-      ansible.builtin.include_tasks:
-        file: "{{ playbook_dir }}/tasks/flatpak.yml"
-      when:
-        - "'desktop' in group_names or
-           'gaming' in group_names or
-           'music' in group_names"
+    - role: desktop
+      when: "'desktop' in group_names"
+      tags:
+        - desktop
 
-    - name: Install Terraform
-      ansible.builtin.include_tasks:
-        file: "{{ playbook_dir }}/tasks/terraform.yml"
-      when: "'dev' in group_names"
+    - role: browser
+      when: "'browser' in group_names"
+      tags:
+        - browser
 
-    - name: Install Terragrunt
-      ansible.builtin.include_tasks:
-        file: "{{ playbook_dir }}/tasks/terragrunt.yml"
-      when: "'dev' in group_names"
+    - role: flatpak
+      when: "'flatpak' in group_names"
+      tags:
+        - flatpak
 
-    - name: Install Minikube
-      ansible.builtin.include_tasks:
-        file: "{{ playbook_dir }}/tasks/minikube.yml"
-      when: "'containers' in group_names"
+    - role: gaming
+      when: "'gaming' in group_names"
+      tags:
+        - gaming
 
-    - name: Configure Arduino
-      ansible.builtin.include_tasks:
-        file: "{{ playbook_dir }}/tasks/arduino.yml"
+    - role: arduino
       when: "'arduino' in group_names"
+      tags:
+        - arduino
 
-    - name: Configure firmware
-      ansible.builtin.include_tasks:
-        file: "{{ playbook_dir }}/tasks/firmware.yml"
-      when: "'firmware' in group_names"
-
-    - name: Configure ASUS
-      ansible.builtin.include_tasks:
-        file: "{{ playbook_dir }}/tasks/asus.yml"
+    - role: asus
       when: "'asus' in group_names"
+      tags:
+        - asus
+
+    - role: music
+      when: "'music' in group_names"
+      tags:
+        - music
 

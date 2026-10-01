@@ -1,0 +1,14 @@
+---
+- name: Enable and start Docker
+  ansible.builtin.systemd_service:
+    name: "{{ docker_service_name }}"
+    enabled: true
+    state: started
+
+- name: Add user to Docker group
+  ansible.builtin.user:
+    name: "{{ setup_username }}"
+    groups:
+      - docker
+    append: true
+

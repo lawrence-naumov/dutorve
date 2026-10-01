@@ -1,0 +1,29 @@
+---
+- name: Install CLI packages
+  ansible.builtin.package:
+    name: "{{ cli_packages }}"
+    state: present
+
+- name: Find configured shell
+  ansible.builtin.command:
+    cmd: "command -v {{ cli_shell | basename }}"
+  register: cli_shell_path
+  changed_when: false
+
+- name: Ensure shell is registered in /etc/shells
+  ansible.builtin.lineinfile:
+    path: /etc/shells
+    line: "{{ cli_shell_path.stdout }}"
+    create: true
+    mode: "0644"
+
+- name: Configure user shell
+  ansible.builtin.user:
+    name: "{{ setup_username }}"
+    shell: "{{ cli_shell_path.stdout }}"
+
+- name: Install Neovim configuration
+  ansible.builtin.include_tasks:
+    file: neovim.yml
+  when: nvim_configuration_repo | length > 0
+
